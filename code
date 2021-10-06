@@ -1,0 +1,267 @@
+//prima di inserire un  nuovo volo controllare che non ci sia gia'
+
+#include<iostream>
+#include<cstring>
+#define DataLength 11
+#define AeroportoLength 40
+#define Luogo 30
+#define Nominativo 20
+using namespace std;
+struct volo{
+	char data[DataLength];
+	int numeroVolo;
+	char aeroportoDiOrigine[AeroportoLength];
+	char aeroportoDiDestinazione[AeroportoLength];
+	int postiDisponibili;
+	volo* next;
+};
+struct pacchettoVacanza{
+	char dataDiPartenza[DataLength];
+	char luogoDellaVacanza[Luogo];
+	int numeroDiPartecipanti;
+	volo* voloPrenotato;
+	
+};
+struct cliente{
+	char nome[Nominativo];
+	char cognome[Nominativo];
+	pacchettoVacanza pacchetto;
+	cliente* next;	
+};
+void stampaPrenotazioni(cliente* );
+volo* createVolo(char[],int,char[],char[],int);
+cliente* createCliente(cliente);
+void stampaVoli(volo*);
+int stampaClienti(cliente*);
+void inserisciVolo(volo*&,volo *);
+void inserisciCliente(cliente*& ,cliente*);
+volo* cercaVolo(volo*,int);
+cliente* cercaCliente(cliente*,int);
+int menu();
+int main(){
+	char premiUnCarattere;
+	bool continua=true;
+	volo temp;
+	pacchettoVacanza pacchettoPrenotazione;
+	int scelta,numeroClienti;
+	cliente ctemp = {0};
+	volo* headVoli=NULL;
+	volo* prenotato=NULL;
+	volo* daInserire= NULL;
+	cliente* clienteDaInserire=NULL;
+	cliente* prenotatore=NULL;
+	cliente * headClienti=NULL;
+	
+	
+	while(continua==true){
+		int sceltaMenu=menu();
+		switch (sceltaMenu){
+			case 1:
+				cout<<"Inserisci la data del volo (gg-mm-aaaa): ";
+				cin.getline(temp.data,DataLength,'\n');
+				cout<<"Inserisci il numero del volo: ";
+				cin>>temp.numeroVolo;
+				cin.sync();
+				cout<<"Inserisci l'aeroporto di origine: ";
+				cin.getline(temp.aeroportoDiOrigine,AeroportoLength,'\n');		
+				cout<<"Inserisci l'aeroporto di destinazione: ";
+				cin.getline(temp.aeroportoDiDestinazione,AeroportoLength,'\n');
+				cout<<"Inserisci i posti disponibili: ";
+				cin>>temp.postiDisponibili;
+				cin.sync();
+				daInserire = createVolo(temp.data,temp.numeroVolo,temp.aeroportoDiOrigine,temp.aeroportoDiDestinazione,temp.postiDisponibili);
+				inserisciVolo(headVoli,daInserire);
+				system("cls");
+				break;
+			case 2:
+				cout<<"Inserisci il nome: ";
+				cin.getline(ctemp.nome,Nominativo,'\n');
+				cout<<"Inserisci il cognome: ";
+				cin.getline(ctemp.cognome,Nominativo,'\n');
+		
+				clienteDaInserire = createCliente(ctemp);
+				inserisciCliente(headClienti,clienteDaInserire);
+				system("cls");
+				break;
+			case 3:
+				if(headVoli!=NULL){
+				stampaVoli(headVoli);
+				cout<<"Premi un tasto per tornare al menu";
+				cin.get(premiUnCarattere);
+				cin.sync();
+				system("cls");
+				break;
+			}
+			else{
+				cout<<"Nessun volo e' registrato ";
+				system("cls");
+				break;
+			}
+			case 4:
+				if(headClienti!=NULL){
+				   stampaClienti(headClienti);
+				   cout<<"Premi un tasto per tornare al menu";
+				   cin.get(premiUnCarattere);
+				   cin.sync();
+				   system("cls");
+				   break;
+			    }
+			    else{
+			    	cout<<"Nessun cliente e' stato registrato";
+			    	system("cls");
+			    	break;
+				}
+				
+			case 5:
+				
+				numeroClienti=stampaClienti(headClienti);
+				do{
+					cout<<"Per quale cliente vuoi prenotare un volo ? (inserisci il numero del cliente): ";
+					cin>>scelta;
+				}while(scelta<=0||scelta>numeroClienti);
+		
+				system("cls");
+	
+				prenotatore=cercaCliente(headClienti,scelta);
+	
+				stampaVoli(headVoli);
+				do{
+					cout<<"Quale volo vuoi prenotare ? (inserisci il numero del volo): ";
+					cin>>scelta;
+					prenotato=cercaVolo(headVoli,scelta);
+				}while(prenotato==NULL);
+	
+				do{
+					cout<<"Per quante persone stai prenotando ?: ";
+					cin>>pacchettoPrenotazione.numeroDiPartecipanti;
+				}while(pacchettoPrenotazione.numeroDiPartecipanti>prenotato->postiDisponibili);
+
+				cout<<"Dove siete diretti ?: ";
+				cin.getline(pacchettoPrenotazione.luogoDellaVacanza,Luogo,'\n');
+
+				prenotatore->pacchetto.numeroDiPartecipanti=pacchettoPrenotazione.numeroDiPartecipanti;
+				prenotatore->pacchetto.voloPrenotato=prenotato;
+				strcpy(prenotatore->pacchetto.luogoDellaVacanza,pacchettoPrenotazione.luogoDellaVacanza);
+				prenotato->postiDisponibili=(prenotato->postiDisponibili)-(prenotatore->pacchetto.numeroDiPartecipanti);
+				system("cls");
+				break;
+			case 6:
+				if(headVoli!=NULL && headClienti!=NULL){
+					stampaPrenotazioni(headClienti);
+					cout<<"Premi un tasto per tornare al menu";
+				   	cin.get(premiUnCarattere);
+				   	cin.sync();
+				   	system("cls");
+				   	break;
+				}
+				else{
+					cout<<"non sono registrati clienti o non sono presenti voli";
+			    	break;
+				}
+			default:
+				continua=false;
+				break;
+		}
+	}
+	stampaVoli(headVoli);	
+	
+}
+volo* createVolo(char data[] ,int numeroVolo,char aeroportoOrigine[],char aeroportoDestinazione[],int posti){
+	volo* v=new volo;
+	strcpy(v->data,data);
+	v->numeroVolo=numeroVolo;
+	strcpy(v->aeroportoDiOrigine,aeroportoOrigine);
+	strcpy(v->aeroportoDiDestinazione,aeroportoDestinazione);
+	v->postiDisponibili=posti;
+	v->next=NULL;
+}
+void inserisciVolo(volo*& head,volo* nuovoVolo){
+	if(nuovoVolo == NULL)
+		return;
+		
+	nuovoVolo->next=head;
+	head=nuovoVolo;
+}
+void inserisciCliente(cliente*& head,cliente* nuovoCliente){
+	if(nuovoCliente == NULL)
+		return;
+		
+	nuovoCliente->next=head;
+	head=nuovoCliente;
+}
+cliente* createCliente(cliente c){
+	cliente* creato=new cliente;
+	strcpy(creato->nome,c.nome);
+	strcpy(creato->cognome,c.cognome);
+	creato->pacchetto=c.pacchetto;
+	creato->next=NULL;
+	
+}
+void stampaVoli(volo* head){
+	while(head!=NULL){
+		cout<<"Volo numero "<<head->numeroVolo<<endl;
+		cout<<"Partenza in data "<<head->data<<endl;
+		cout<<"Dall'aeroporto di "<<head->aeroportoDiOrigine<<" all'aeroporto di "<<head->aeroportoDiDestinazione<<endl;
+		cout<<"Posti disponibili: "<<head->postiDisponibili<<endl;
+		cout<<"------------------------------------------------------------------------"<<endl;
+		head=head->next;
+	}
+}
+int stampaClienti(cliente* head){
+	int cont=1;
+	while(head!=NULL){
+		cout<<cont<<")"<<endl;
+		cout<<"Nome: "<<head->nome<<endl;
+		cout<<"Cognome: "<<head->cognome<<endl<<endl;
+		head=head->next;
+		cont++;
+	}
+	return cont;
+}
+volo* cercaVolo(volo* head,int numero){
+	while(head!=NULL){
+		if(head->numeroVolo==numero){
+			return head;
+		}
+		head=head->next;
+	}
+	return NULL;
+}
+cliente* cercaCliente(cliente* head,int numero){
+	int cont=1;
+	while(head!=NULL){
+		if(cont==numero){
+			return head;
+		}
+		head=head->next;
+		cont++;
+	}
+	return NULL;
+}
+void stampaPrenotazioni(cliente* head){
+		while(head!=NULL){
+			if(head->pacchetto.voloPrenotato!=NULL){
+				cout<<"Il cliente "<<head->nome<<" "<<head->cognome<<" Ha prenotato il volo numero "<<head->pacchetto.voloPrenotato->numeroVolo<<endl;
+			}
+			head=head->next;
+		}
+}
+int menu(){
+	int scelta;
+	cout<<"---------------------------------------------------"<<endl;
+	cout<<"1) Inserisci un nuovo volo;"<<endl;
+	cout<<"2) Inserisci un nuovo cliente;"<<endl;
+	cout<<"3) Visualizza i voli;"<<endl;
+	cout<<"4) Visualizza i clienti;"<<endl;
+	cout<<"5) Prenota un volo per un cliente;"<<endl;
+	cout<<"6) Visualizza le prenotazioni effettuate;"<<endl;
+	cout<<"7) Esci;"<<endl;
+	cout<<"---------------------------------------------------"<<endl;
+	do{
+		cout<<"Scelta: ";
+		cin>>scelta;
+		cin.sync();
+	}while(scelta<1||scelta>7);
+	return scelta;
+		
+}
